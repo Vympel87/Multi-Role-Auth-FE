@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -6,7 +6,20 @@ const FormAddProducts = () => {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [msg, setMsg] = useState("");
+  const [csrfToken, setCsrfToken] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCsrfToken = async () => {
+      try {
+        const response = await axios.get("http://localhost:8000/api/csrf-token", { withCredentials: true });
+        setCsrfToken(response.data.csrfToken);
+      } catch (error) {
+        console.error("Error fetching CSRF token:", error);
+      }
+    };
+    fetchCsrfToken();
+  }, []);
 
   const saveProduct = async (e) => {
     e.preventDefault();
@@ -14,6 +27,11 @@ const FormAddProducts = () => {
       await axios.post("http://localhost:8000/api/products", {
         name: name,
         price: price,
+      }, {
+        headers: {
+          'X-CSRF-Token': csrfToken,
+        },
+        withCredentials: true,
       });
       navigate("/products");
     } catch (error) {
@@ -22,6 +40,7 @@ const FormAddProducts = () => {
       }
     }
   };
+
   return (
       <div>
           <h1 className="title">

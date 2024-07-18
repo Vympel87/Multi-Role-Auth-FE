@@ -9,22 +9,34 @@ const FormEditUser = () => {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [role, setRole] = useState("");
     const [msg, setMsg] = useState("");
+    const [csrfToken, setCsrfToken] = useState("");
     const navigate = useNavigate();
     const { id } = useParams();
 
     useEffect(() => {
-        const getUserById = async () => {
-        try {
-            const response = await axios.get(`http://localhost:8000/api/users/${id}`);
-            setName(response.data.data.name);
-            setEmail(response.data.data.email);
-            setRole(response.data.data.role);
-        } catch (error) {
-            if (error.response) {
-            setMsg(error.response.data.msg);
+        const fetchCsrfToken = async () => {
+            try {
+                const response = await axios.get("http://localhost:8000/api/csrf-token", { withCredentials: true });
+                setCsrfToken(response.data.csrfToken);
+            } catch (error) {
+                console.error("Error fetching CSRF token:", error);
             }
-        }
         };
+        
+        const getUserById = async () => {
+            try {
+                const response = await axios.get(`http://localhost:8000/api/users/${id}`);
+                setName(response.data.data.name);
+                setEmail(response.data.data.email);
+                setRole(response.data.data.role);
+            } catch (error) {
+                if (error.response) {
+                setMsg(error.response.data.msg);
+                }
+            }
+        };
+
+        fetchCsrfToken();
         getUserById();
     }, [id]);
 
@@ -37,6 +49,11 @@ const FormEditUser = () => {
             password: password,
             confirmPassword: confirmPassword,
             role: role,
+        }, {
+            headers: {
+            'X-CSRF-Token': csrfToken,
+            },
+            withCredentials: true,
         });
         navigate("/users");
         } catch (error) {

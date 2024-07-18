@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from 'react';
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -9,7 +9,20 @@ const FormAddUser = () => {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [role, setRole] = useState("");
     const [msg, setMsg] = useState("");
+    const [csrfToken, setCsrfToken] = useState("");
     const navigate = useNavigate();
+  
+    useEffect(() => {
+      const fetchCsrfToken = async () => {
+        try {
+          const response = await axios.get("http://localhost:8000/api/csrf-token", { withCredentials: true });
+          setCsrfToken(response.data.csrfToken);
+        } catch (error) {
+          console.error("Error fetching CSRF token:", error);
+        }
+      };
+      fetchCsrfToken();
+    }, []);
 
     const saveUser = async (e) => {
         e.preventDefault();
@@ -20,6 +33,11 @@ const FormAddUser = () => {
             password: password,
             confirmPassword: confirmPassword,
             role: role,
+        }, {
+          headers: {
+            'X-CSRF-Token': csrfToken,
+          },
+          withCredentials: true,
         });
         navigate("/users");
         } catch (error) {
